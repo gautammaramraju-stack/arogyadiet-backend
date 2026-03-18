@@ -105,12 +105,22 @@ function canAccessDriver(requester, targetDriverId) {
   return false;
 }
 
+// Blocked demo emails — these must never be allowed to login
+const BLOCKED_EMAILS = new Set([
+  'customer1@demo.com', 'customer2@demo.com', 'customer3@demo.com',
+  'driver1@demo.com', 'driver2@demo.com', 'driver3@demo.com',
+  'admin1@demo.com', 'admin2@demo.com', 'master@demo.com'
+]);
+
 // Auth: POST /api/auth/login — returns user with franchiseId (admin), driverId (driver)
 app.post('/api/auth/login', (req, res) => {
   data = loadData();
   const users = data.users || {};
   const { email, password, role } = req.body || {};
   const emailKey = (email || '').toString().trim().toLowerCase();
+  if (BLOCKED_EMAILS.has(emailKey)) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
   const u = users[emailKey];
   if (!u || u.password !== password || (role && u.role !== role)) {
     return res.status(401).json({ error: 'Invalid credentials' });
